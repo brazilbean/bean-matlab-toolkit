@@ -3,19 +3,24 @@
 %
 % notefun should be a function handle defined for @(xdata,ydata)
 
-function notes = scatternotes( notefun, labels, varargin )
+function notes = scatternotes( notefun, varargin )
 
-    if nargin < 2
+    if ~isempty(varargin) && iscell(varargin{1})
+        labels = varargin{1};
+        varargin = varargin(2:end);
+    else
         labels = {};
     end
-    params = get_params(varargin{:});
-    params = default_param( params, 'textArgs', {} );
-    params = default_param( params, 'axes', gca );
+    params = default_param( varargin, ...
+        'labels', labels, ...
+        'textArgs', {}, ...
+        'axes', gca );
+    labels = params.labels;
     
     %% Get xdata and ydata
     ch = get(params.axes, 'children');
     ty = get(ch, 'type');
-    ch = ch( achar('hggroup', ty) );
+    ch = ch( find(strcmp('hggroup', ty),1,'last') );
     if (isempty(ch))
         error('No scatter plot in current figure.');
     end
@@ -34,10 +39,21 @@ function notes = scatternotes( notefun, labels, varargin )
         text( xdata(notes), ydata(notes), labels(notes), params.textargs{:} );
     end
     
+    %% Apply color
+    if isfield(params, 'scatterfun')
+        % i.e. scatterfun = ...
+        %     @(x, y, notes) scatter(x(notes), y(notes), 50, 'r', 'filled')
+        hold on;
+        params.scatterfun(xdata, ydata, notes);
+        hold off;
+    end
+    
+    %% Wrap up
     if (nargout < 1)
         clear notes;
     end
     
+    %% Sub-routines
     function clabels = convert_labels( labels )
         clabels = cell(size(labels));
         for ii = 1 : numel(labels)

@@ -2,6 +2,14 @@
 % Gordon Bean, August 2013
 
 function [indices, labels] = label_components(img)
+    % Add empty border around image
+    [m,n] = size(img);
+    img = [false false(1,n) false
+           false(m,1) img false(m,1)
+           false false(1,n) false ];
+    orig_inds = zeros([m,n]+2);
+    orig_inds(2:end-1,2:end-1) = reshape(1 : prod([m, n]),[m,n]);
+    
     % Set up label, visited, etc.
     cur_label = 1;
     labels = zeros(size(img));
@@ -17,18 +25,19 @@ function [indices, labels] = label_components(img)
     
     % Define neighbor function
     neighbors = in(bsxfun(@plus, (-1:1)', (-1:1)*m),@(x) x ~= 0);
-    as_subs = @(index, fun) ...
-        apply(mod(index-1,m)+1, fix((index-1)/m)+1, fun);
-    valid = @(index, nn) nn > 0 & ...
-        as_subs(index, @(row, col) ...
-        as_subs(nn, @(nrow, ncol) ...        
-        nrow > 0 & nrow <= m & abs(nrow-row) < 2 & ...
-        ncol > 0 & ncol <= n & abs(ncol-col) < 2 ));
+%     as_subs = @(index, fun) ...
+%         apply(mod(index-1,m)+1, fix((index-1)/m)+1, fun);
+%     valid = @(index, nn) nn > 0 & ...
+%         as_subs(index, @(row, col) ...
+%         as_subs(nn, @(nrow, ncol) ...        
+%         nrow > 0 & nrow <= m & abs(nrow-row) < 2 & ...
+%         ncol > 0 & ncol <= n & abs(ncol-col) < 2 ));
     
     % Single pass through image
-    for master_pos = 1 : numel(img)
+    for master_pos = find(orig_inds>0 & img)'
+        
         % Is current pixel un-visited foreground?
-        if img(master_pos) && ~visited(master_pos)
+        if ~visited(master_pos)
             % Pixel is foreground - add to queue
             queue(queue_end) = master_pos;
             queue_end = queue_end + 1;
@@ -46,12 +55,14 @@ function [indices, labels] = label_components(img)
                 
                 % Assign label
                 labels(pos) = cur_label;
-                indices{cur_label}(comp_end) = pos;
+                indices{cur_label}(comp_end) = orig_inds(pos);
                 comp_end = comp_end + 1;
 
                 % Get all non-visited, foreground neighbors
-                nbrs = in(pos + neighbors, valid(pos, pos+neighbors));
-                nbrs = in(nbrs, @(x) ~visited(x) & img(x));
+%                 nbrs = in(pos + neighbors, valid(pos, pos+neighbors));
+%                 nbrs = in(nbrs, @(x) ~visited(x) & img(x));
+                nbrs = pos + neighbors;
+                nbrs = nbrs(~visited(nbrs) & img(nbrs));
 
                 % Add neighbors to queue
                 queue(queue_end + (0 : numel(nbrs)-1)) = nbrs;
@@ -75,6 +86,9 @@ function [indices, labels] = label_components(img)
     end
     
     indices = indices(1:cur_label-1);
+    if nargout > 1
+        labels = labels(2:end-1,2:end-1);
+    end
     
 %     % Set up label, visited, etc.
 %     cur_label = 1;

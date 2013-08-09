@@ -11,6 +11,6 @@ function middles = centroids(img, inds)
     middles = nan(length(inds),2);
     for ii = 1 : length(inds)
         [rows, cols] = ind2sub(size(img), inds{ii});
-        middles(ii,:) = [mean(rows), mean(cols)];
+        middles(ii,:) = [mean(cols), mean(rows)];
     end
 end

@@ -14,9 +14,11 @@ function data = fil( data, filt, value )
         error('Not enough input arguments');
     end
     
+    % If filter is a function, apply it to the data
     if (isa( filt, 'function_handle' ))
         filt = filt(data);
     end
+    
     if (numel(value) == numel(data))
         data( filt ) = value(filt);
     else

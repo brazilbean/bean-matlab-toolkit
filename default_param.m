@@ -1,6 +1,8 @@
 %% Default param
 % Gordon Bean, March 2012
 
+% (c) Gordon Bean, August 2013
+
 function params = default_param( params, varargin )
     if (iscell(params))
         params = get_params(params{:});

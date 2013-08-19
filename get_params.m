@@ -7,6 +7,8 @@
 % Used to parse key-value pairs in varargin - returns a struct.
 % Converts all keys to lower case.
 
+% (c) Gordon Bean, August 2013
+
 function params = get_params( varargin )
     params = struct;
     

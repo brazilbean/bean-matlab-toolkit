@@ -9,5 +9,8 @@
 % apply(3, 4, @(x,y) x + y)
 
 function out = apply(varargin)
+    if nargin < 1
+        error('apply requires at least 1 input argument');
+    end
     out = varargin{end}(varargin{1:end-1});
 end

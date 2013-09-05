@@ -8,6 +8,7 @@ function points = interactive_figure( draw_fun, num_points, title_ )
     if (nargin < 3)
         title_ = sprintf('Pick %i points.', num_points);
     end
+    points = []; % Initialize to empty
     
     states = struct;
     

@@ -41,6 +41,10 @@ function notes = scatternotes( notefun, varargin )
     
     %% Apply color
     if isfield(params, 'scatterfun')
+        if ~isa(params.scatterfun, 'function_handle')
+            params.scatterfun = @(x,y,n) ...
+                scatter( x, y, 20+10*n, n, 'filled');
+        end
         % i.e. scatterfun = ...
         %     @(x, y, notes) scatter(x(notes), y(notes), 50, 'r', 'filled')
         hold on;

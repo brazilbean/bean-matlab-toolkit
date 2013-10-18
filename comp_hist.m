@@ -1,25 +1,57 @@
 % Gordon Bean, March 2011, February 2012
 
-function [freq_out, bin_out] = comp_hist( x, nbins, varargin )
-    nbins_ = 20;
-    
-    if (nargin == 1)
-        nbins = nbins_;
+function [freq_out, bin_out] = comp_hist( varargin )
+    if iscell(varargin{1})
+        % data sets passed in cell array
+        x = varargin{1};
+        
+        if ischar(varargin{2})
+            % No nbins provided
+            nbins = 20;
+            varargin = varargin(2:end);
+        else
+            nbins = varargin{2};
+            varargin = varargin(3:end);
+        end
     else
-        if (ischar(nbins))
-            varargin = [nbins varargin];
-            nbins = nbins_;
+        % Find position of first parameter 
+        ii = find(cellfun(@ischar, varargin), 1, 'first');
+        if isempty(ii)
+            ii = length(varargin)+1;
+        end
+        foo = varargin(1:ii-1);
+        varargin = varargin(ii:end);
+        
+        if length(foo{end}) == 1
+            % nbins
+            nbins = foo{end};
+            x = foo(1:end-1);
+        else
+            nbins = 20;
+            x = foo;
         end
     end
-    
-    params = get_params( varargin{:} );
-    if (~isfield( params, 'style' ))
-        params.style = 'histogram';
-    end
-    if (~isfield( params, 'linewidth'))
-        params.linewidth = 2;
-    end
-    
+%     nbins_ = 20;
+%     
+%     if (nargin == 1)
+%         nbins = nbins_;
+%     else
+%         if (ischar(nbins))
+%             varargin = [nbins varargin];
+%             nbins = nbins_;
+%         end
+%     end
+%     
+    params = default_param( varargin, ...
+        'style', 'histogram', 'linewidth', 2);
+%     params = get_params( varargin{:} );
+%     if (~isfield( params, 'style' ))
+%         params.style = 'histogram';
+%     end
+%     if (~isfield( params, 'linewidth'))
+%         params.linewidth = 2;
+%     end
+%     
     switch lower(params.style)
         case 'histogram'
             % Get bins over whole range

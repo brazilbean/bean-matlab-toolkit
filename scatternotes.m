@@ -14,7 +14,8 @@ function notes = scatternotes( notefun, varargin )
     params = default_param( varargin, ...
         'labels', labels, ...
         'textArgs', {}, ...
-        'axes', gca );
+        'axes', gca, ...
+        'scatterfun', 1);
     labels = params.labels;
     
     %% Get xdata and ydata
@@ -29,7 +30,11 @@ function notes = scatternotes( notefun, varargin )
     ydata = get(ch, 'ydata');
     
     %% Apply filters
-    notes = notefun(xdata, ydata);
+    if isa(notefun, 'function_handle')
+        notes = notefun(xdata, ydata);
+    else
+        notes = notefun;
+    end
 
     %% Apply labels
     if ~isempty(labels)
@@ -43,7 +48,8 @@ function notes = scatternotes( notefun, varargin )
     if isfield(params, 'scatterfun')
         if ~isa(params.scatterfun, 'function_handle')
             params.scatterfun = @(x,y,n) ...
-                scatter( x, y, 20+10*n, n, 'filled');
+                ...scatter( x(n), y(n), 20+10*n, n, 'filled');
+                scatter( x(n), y(n), 30, [0.75 0 0], 'filled');
         end
         % i.e. scatterfun = ...
         %     @(x, y, notes) scatter(x(notes), y(notes), 50, 'r', 'filled')

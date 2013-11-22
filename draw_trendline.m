@@ -4,7 +4,7 @@
 % Get's the XData and YData from the last plot, calculates the regression
 % slope, and draws a trend line.
 
-function draw_trendline (varargin)
+function [xx, yy] = draw_trendline (varargin)
     child = get(gca, 'children');
     xdata = get(child, 'xdata');
     ydata = get(child, 'ydata');
@@ -20,5 +20,10 @@ function draw_trendline (varargin)
     else
         line(xx, xx*m(2) + m(1), 'linewidth', 2, ...
             'color', 'g', 'linestyle', '--');
+    end
+    
+    if (nargout > 0)
+        xx = xdata;
+        yy = xx*m(2) + m(1);
     end
 end

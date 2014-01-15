@@ -15,7 +15,8 @@ function ysmooth = gaussian_smooth(y, w, dim, varargin)
     % Parse parameters
     params = default_param(varargin, ...
         'gaussianWidth', 3, ...
-        'numEndAve', 10 );
+        'numEndAve', 10, ...
+        'block', nan);
     
     % Reshape y
     yp = permute_dim(y, dim);
@@ -33,12 +34,18 @@ function ysmooth = gaussian_smooth(y, w, dim, varargin)
 
     % Define the guassian window
     gw = params.gaussianwidth;
-    block = normpdf(linspace(-gw, gw, 2*w+1));
-    block = block ./ sum(block);
+    if isnan(params.block)
+        block = normpdf(linspace(-gw, gw, 2*w+1));
+        block = block ./ sum(block);
+    else
+        block = params.block;
+    end
     
     % Smooth the data
     for ii = 1 : n
-        ysmooth(ii,:,:) = ndtimes(block, y_(ii:ii+2*w,:,:), [2, 1]);
+%         ysmooth(ii,:,:) = ndtimes(block, y_(ii:ii+2*w,:,:), [2, 1]);
+        ysmooth(ii,:,:) = ...
+            ndtimes(block, y_(ii:ii+length(block)-1,:,:), [2, 1]);
     end
     ysmooth = reshape(ysmooth, sz);
     ysmooth = ipermute_dim(ysmooth, size(y), dim);

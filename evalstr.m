@@ -4,6 +4,8 @@
 % Calls eval using sprintf format arguments
 
 function evalstr( varargin )
-    evalin('caller', sprintf(varargin{:}));
+    str = sprintf(varargin{:});
+    fprintf('%s\n', str);
+    evalin('caller', str);
     
 end

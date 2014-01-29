@@ -16,7 +16,7 @@ function enrich = go_enrichment( scores, names, go, filter, varargin )
         'fdr', 1/4, ...
         'verbose', true, ...
         'nbins', 30, ...
-        'maxtermsize', 50);
+        'maxtermsize', 20);
     
     if isfield(params, 'effectFilter')
         filter = params.effectFilter;
@@ -36,98 +36,85 @@ function enrich = go_enrichment( scores, names, go, filter, varargin )
     
     confoofun = @(x) confoo * fil(x,@isnan,0) ./ sum(confoo,2);
 
+    % Which genes
     gi = achar(unames, go.gene, 1);
-    mygo = zeros(size(go.membermat,1), length(unames));
-    mygo(:,~isnan(gi)) = go.membermat(:,notnan(gi));
 
+    % Which terms
     molfun = strcmp('molecular_function', go.category);
+    nogenes = sum(go.membermat(:,notnan(gi)),2) <= 1;
+    toobig = sum(go.membermat(:,notnan(gi)),2) > params.maxtermsize;
+    
+    valterms = ~molfun & ~nogenes & ~toobig;
+
+    mygo.membermat = zeros(sum(valterms), length(unames));
+    mygo.membermat(:,~isnan(gi)) = go.membermat(valterms,notnan(gi));
+
+    mygo.definition = go.definition(valterms);
+    mygo.term = go.term(valterms);
 
     %% Score terms
-    foo2 = confoofun(scores(:));
+    gene_scores = confoofun(scores(:));
     
-    tn = sum(mygo,2);
-    score_go = @(foo, mygo) apply(sum(mygo,2), @(tn) ...
-        fil( bsxfun(@times, ...
-        bsxfun(@rdivide, mygo * foo, tn), ~molfun), @(x)x==0));
-
-    tmp = score_go(foo2, mygo);
+    tn = sum(mygo.membermat,2);
+    score_go = @(foo, mygo) bsxfun(@rdivide, mygo.membermat * foo, tn);
+    term_scores = score_go(gene_scores, mygo);
     
     %% Score null model
     iters = params.numiters;
-    foorand = foo2(shake(repmat((1:length(foo2))', [1 iters])));
-    tmp2 = score_go(foorand, mygo);
+    perm_gene_scores = ...
+        gene_scores(shake(repmat((1:length(gene_scores))', [1 iters])));
+    tmp2 = score_go(perm_gene_scores, mygo);
     
-    %% Compare ratios
-    m = prctile(tmp2(:), [0.1 99.9]);
-    bins = [-inf linspace(m(1), m(2), params.nbins) inf];
-    
-    mts = params.maxtermsize;
-    counts = nan(length(bins),mts);
-    rcounts = nan(length(bins),mts);
-    for t = 1 : mts
-        counts(:,t) = mean(histc( tmp2(tn==t,:), bins ),2);
-        rcounts(:,t) = histc( tmp(tn==t,:), bins );
+    %% Compute FDR for each term score
+    fdr = nan(size(term_scores));
+    for n = 2 : params.maxtermsize
+        null = in(tmp2(tn==n,:));
+        hits = term_scores(tn==n);
+        fdr(tn==n) = mean( bsxfun(@le, null, hits') ) ./ ...
+            mean( bsxfun(@le, hits, hits') );
     end
     
-    % Terms greater than mts are ignored.
+    %% Display significant terms
+    sigterms = fdr <= params.fdr;
+    [~,ord] = sort(tn(sigterms)+fdr(sigterms));
     
-    %% Pick enriched terms
-    [bi, ti] = find(bsxfun(@and, ...
-        counts ./ rcounts < params.fdr, filter(bins')));
-
-    %% Display terms
-    binselect = @(x, bin, val) ...
-    apply(in((1:length(x))', x(:)>=bin(1) & x(:)<bin(2) & val(:)), @(y) ...
-    [y x(y)]); 
-    
-    enrich.displayed = {};
-    if params.verbose
-        fprintf('\n\n\n');
-        for ii = 1:length(bi);
-            bin = bins(bi(ii)+[0 1]);
-
-            tmpi = binselect(tmp, bin, tn == ti(ii));
-            def = go.definition(tmpi(:,1));
-            enrich.displayed = union(enrich.displayed, def);
-
-            fprintf('Group %i - FDR = %0.3f, term size = %i\n',...
-                ii, counts(bi(ii),ti(ii))./rcounts(bi(ii),ti(ii)), ti(ii));
-            fprintf('----------------------------------------\n');
-            for jj = 1 : length(def)
-                jjj = mygo(tmpi(jj,1),:)==1;
-
-                tmpratio = ...
-                    sum(apply(foo2(jjj),@(x) x >= bin(1) & x < bin(2)));
-                fprintf(' %i) %s (%0.3f)\n', jj, def{jj}, tmp(tmpi(jj,1)));
-                
-                [tmpn, tmpf] = deal(unames(jjj), foo2(jjj));
-                [tmpf, ord] = sort(tmpf);
-                tmpn = tmpn(ord);
-
-                n = length(tmpn);
-                for kk = 1 : 5 : n
-                    kkk = kk : min(n, kk+4);
-                    fprintf('   ');
-                    iprintf(1,'%s (%0.2f), ', tmpn(kkk), tmpf(kkk));
-                    fprintf('\n')
-                end
-            end
+    for ii = in(find(sigterms),ord)'
+        % Print term
+        fprintf('%s (%0.3f), FDR = %0.3f, n = %i\n', ...
+            mygo.definition{ii}, term_scores(ii), fdr(ii), tn(ii));
+        
+        % Print genes, scores
+        iii = mygo.membermat(ii,:) == 1;
+        [tmps, ord2] = sort(gene_scores(iii));
+        tmpn = in(unames(iii),ord2);
+        n = length(tmpn);
+        
+        for kk = 1 : 5 : n
+            kkk = kk : min(n, kk+4);
+            fprintf('   ');
+            iprintf(1, '%s (%0.2f), ', tmpn(kkk), tmps(kkk));
+            fprintf('\n');
+        end
+        
+        goi = achar(mygo.term(ii), go.term);
+        missed = setdiff(go.gene(go.membermat(goi,:)==1), tmpn);
+        if ~isempty(missed)
+            fprintf('   Genes missing data: ');
+            fprintf('%s ', missed{:});
             fprintf('\n');
         end
         fprintf('\n');
+        
     end
-    
+
     %% Return
-    enrich.term_score = tmp;
+    enrich.term_score = term_scores;
     enrich.tn = tn;
-    enrich.fdr = counts ./ rcounts;
-    enrich.bins = bins;
+    enrich.fdr = fdr;
     enrich.params = params;
     enrich.unames = unames;
     enrich.convert = confoofun;
     enrich.score_go = score_go;
-    enrich.randcounts = counts;
-    enrich.counts = rcounts;
     enrich.mygo = mygo;
     enrich.filter = filter;
     

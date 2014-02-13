@@ -16,7 +16,8 @@ function enrich = go_enrichment( scores, names, go, filter, varargin )
         'fdr', 1/4, ...
         'verbose', true, ...
         'nbins', 30, ...
-        'maxtermsize', 20);
+        'maxtermsize', 20, ...
+        'tail', 'left');
     
     if isfield(params, 'effectFilter')
         filter = params.effectFilter;
@@ -66,18 +67,34 @@ function enrich = go_enrichment( scores, names, go, filter, varargin )
     tmp2 = score_go(perm_gene_scores, mygo);
     
     %% Compute FDR for each term score
+    switch lower(params.tail)
+        case {'left','lower','neg','negative'}
+            tailfun = @le;
+        case {'right','upper','pos','positive'}
+            tailfun = @ge;
+        case {'both','two','two-tail'}
+            tailfun = @(x,y) abs(x) >= abs(y);
+        otherwise
+            error('Unsupported tail option: %s', params.tail);
+    end
+    
     fdr = nan(size(term_scores));
     for n = 2 : params.maxtermsize
         null = in(tmp2(tn==n,:));
+        null = null - median(null);
+        
         hits = term_scores(tn==n);
-        fdr(tn==n) = mean( bsxfun(@le, null, hits') ) ./ ...
-            mean( bsxfun(@le, hits, hits') );
+        hits = hits - median(hits);
+        
+        fdr(tn==n) = mean( bsxfun(tailfun, null, hits') ) ./ ...
+            mean( bsxfun(tailfun, hits, hits') );
     end
     
     %% Display significant terms
-    sigterms = fdr <= params.fdr;
+    sigterms = fdr <= params.fdr & filter(term_scores);
     [~,ord] = sort(tn(sigterms)+fdr(sigterms));
     
+    fprintf('\n ------------------------------------ \n');
     for ii = in(find(sigterms),ord)'
         % Print term
         fprintf('%s (%0.3f), FDR = %0.3f, n = %i\n', ...
@@ -108,14 +125,16 @@ function enrich = go_enrichment( scores, names, go, filter, varargin )
     end
 
     %% Return
-    enrich.term_score = term_scores;
-    enrich.tn = tn;
-    enrich.fdr = fdr;
     enrich.params = params;
     enrich.unames = unames;
     enrich.convert = confoofun;
+    enrich.gene_scores = gene_scores;
     enrich.score_go = score_go;
     enrich.mygo = mygo;
+    enrich.tn = tn;
+    enrich.term_score = term_scores;
+    enrich.fdr = fdr;
     enrich.filter = filter;
+    enrich.sigterms = sigterms;
     
 end

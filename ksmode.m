@@ -37,6 +37,6 @@ function [center, res] = ksmode( data, dim, npoints )
         % mode
         m = xi(argmax(f));
 
-        res = diff(xi(argmax(f)+[0 1]));
+        res = diff(xi([1 2]));
     end
 end

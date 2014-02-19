@@ -14,6 +14,13 @@ function qline( xx, yy, color, linewidth, varargin )
     else
         lstyle = '-';
     end
+    
+    if isempty(yy)
+        % Treat xx as the slope coefficients [1 x]
+        m = xx;
+        xx = xlim;
+        yy = [ones(2,1) xx'] * m;
+    end
     if (length(xx) < 2)
         xx = [xx xx];
     end

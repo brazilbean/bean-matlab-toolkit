@@ -8,7 +8,7 @@ function out = blockfun( data, block, fun, varargin )
     params = default_param( varargin, ...
         'includeCenter', true, ...
         'padFunction', @nan, ...
-        'positions', 1 : numel(data), ...
+        'positions', nan, ...
         'maxPosLength', 1e4);
 
     % Define neighbor indices
@@ -17,37 +17,58 @@ function out = blockfun( data, block, fun, varargin )
         block = true(block);
     end
     
-    dh = size(data,1);
-    hi = (1 : size(block,1))' - fix(size(block,1)/2);
-    wi = (1 : size(block,2)) - fix(size(block,2)/2);
-    ni = bsxfun(@plus, hi', dh*wi');
+    % Define positions to execute
+    if isnan(params.positions)
+        positions = 1:numel(data);
+    else
+        positions = params.positions;
+    end
     
-    ni = ni(block);
-        
+    % Define neighboring positions
+    rni = (1 : size(block,1))' - fix(size(block,1)/2);
+    rni = repmat(rni, [1 size(block,2)]);
+    cni = (1 : size(block,2)) - fix(size(block,2)/2);
+    cni = repmat(cni, [size(block,1) 1]);
+    
+    rni = rni(block);
+    rni = rni(:);
+    cni = cni(block);
+    cni = cni(:);
+    
     if ~params.includecenter
-        ni = in(setdiff(ni, 0))';
+        rni = in(setdiff(rni, 0));
+        cni = in(setdiff(cni, 0));
     end
     
     % Iterate to avoid Out of Memory errors.
     len_pos = params.maxposlength;
-    num_mem_blocks = ceil(numel(params.positions) / len_pos);
+    num_mem_blocks = ceil(numel(positions) / len_pos);
     out = params.padfunction(size(data));
     
     for memblock = 1 : num_mem_blocks
         % Define positions
         pos = (1 : len_pos) + (memblock-1)*len_pos;
-        pos = pos(pos <= length(params.positions));
-        pos = params.positions(pos);
+        pos = pos(pos <= length(positions));
+        pos = positions(pos);
+        
+        % Get valid neighbors
+        [r,c] = ind2sub(size(data), pos(:)');
+        rr = bsxfun(@plus, r, rni);
+        cc = bsxfun(@plus, c, cni);
+        iival = rr > 0 & rr < size(data,1) & cc > 0 & cc < size(data,2);
         
         % Reshape to columns
-        cols = params.padfunction(length(ni), length(pos));
-        ii = bsxfun(@plus, pos, ni);
-        iival = ii > 0 & ii <= numel(data);
-
-        cols(iival) = data(ii(iival));
+        cols = params.padfunction(length(rni), length(pos));
+        
+        cols(iival) = data(sub2ind(size(data), rr(iival), cc(iival)));
 
         % Execute function and reshape output
         out(pos) = fun(cols);
         clear cols ii iival
+    end
+    
+    % Return the requested positions
+    if ~isnan(params.positions)
+        out = out(params.positions);
     end
 end

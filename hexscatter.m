@@ -1,8 +1,41 @@
 %% h = HEXSCATTER( x, y, ... )
 % Gordon Bean, February 2014
-% A scatter-plot substitute - plot density of data in hexagonal patches
+% A scatter-plot substitute - generate a density plot using hexagonal
+% patches.
 %
-% Requires knnsearch from the Statistcs Toolbox when data are large.
+% Syntax
+% hexscatter(xdata, ydata)
+% hexscatter(xdata, ydata, 'Name', Value, ...)
+% h = hexscatter(...)
+%
+% Description
+% hexscatter(xdata, ydata) creates a density plot of the ydata versus the
+% xdata using hexagonal tiles. xdata and ydata should be vectors. NaN
+% values (and their corresponding values in the other vector) are ignored.
+%
+% hexscatter(xdata, ydata, 'Name', Value, ...) accepts name-value pairs of
+% arguments from the following list (defaults in {}):
+%  'xlim' { [min(xdadta(:) max(xdata(:))] } - a 2-element vector containing
+%  the lower and upper bounds of the 2nd dimension of the grid.
+%  'ylim' { [min(ydadta(:) max(ydata(:))] } - a 2-element vector containing
+%  the lower and upper bounds of the 1st dimension of the grid.
+%  'res' { 50 } - the resolution, or number of bins in each dimension. The
+%  total number of bins will be the resolution squared.
+%  'drawEdges' { false } - if true, edges are drawn around each hexagonal
+%  patch.
+%  'showZeros' { false } - if true, bins with 0 counts are shaded; if
+%  false, only bins with non-zero counts are colored. 
+% 
+% h = hexscatter( ... ) returns the object handle to the patch object
+% created.
+% 
+% Examples
+% hexscatter(rand(2000,1), rand(2000,1))
+%
+% hexscatter(rand(2000,1), rand(2000,1), 'res', 90)
+%
+% Also available in the Bean Matlab Toolkit:
+% https://github.com/brazilbean/bean-matlab-toolkit
 
 function h = hexscatter( xdata, ydata, varargin )
     params = default_param( varargin, ...
@@ -97,5 +130,46 @@ function h = hexscatter( xdata, ydata, varargin )
     
     if nargout == 0
         clear h;
+    end
+    
+    %% Function: default_param
+    % Gordon Bean, March 2012
+    % Copied from https://github.com/brazilbean/bean-matlab-toolkit
+    function params = default_param( params, varargin )
+        if (iscell(params))
+            params = get_params(params{:});
+        end
+        defaults = get_params(varargin{:});
+
+        for f = fieldnames(defaults)'
+            field = f{:};
+            if (~isfield( params, lower(field) ))
+                params.(lower(field)) = defaults.(field);
+            end
+        end
+    end
+
+    %% Function: get_params - return a struct of key-value pairs
+    % Gordon Bean, January 2012
+    %
+    % Usage
+    % params = get_params( ... )
+    %
+    % Used to parse key-value pairs in varargin - returns a struct.
+    % Converts all keys to lower case.
+    %
+    % Copied from https://github.com/brazilbean/bean-matlab-toolkit
+    function params = get_params( varargin )
+        params = struct;
+
+        nn = length(varargin);
+        if (mod(nn,2) ~= 0)
+            error('Uneven number of parameters and values in list.');
+        end
+
+        tmp = reshape(varargin, [2 nn/2]);
+        for kk = 1 : size(tmp,2)
+            params.(lower(tmp{1,kk})) = tmp{2,kk};
+        end
     end
 end

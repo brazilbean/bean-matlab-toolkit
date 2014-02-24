@@ -1,4 +1,4 @@
-%% IPRINTF - Interleaved fprintf
+%% IPRINTF - Interleaved fprintf/sprintf
 % Gordon Bean, September 2011
 %
 % IPRINTF expects the data to be passed as cell arrays or numeric arrays.
@@ -50,7 +50,6 @@ function string_out = iprintf( fid, format, varargin )
     
     % Turn all columns into cell arrays
     size2 = @(x) size(x,2);
-    m = sum(cellfun(size2, varargin));
     tmp = cell(1,n);
     for ii = 1 : length(varargin)
         tmp2 = cell(n,size2(varargin{ii}));

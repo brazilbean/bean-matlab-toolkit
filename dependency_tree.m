@@ -4,7 +4,7 @@
 % Params
 % prefix <'/cellar/users/gbean/'>
 % - restrict dependencies to this path prefix
-% outfile
+% outputfile
 % - the file to store the output
 
 function [ dependencies, visited, params ] = dependency_tree ...

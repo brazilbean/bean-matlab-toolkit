@@ -63,7 +63,7 @@ function h = hexscatter( xdata, ydata, varargin )
     n = size(X,1);
     Y(:,1:fix(end/2)*2) = ...
         Y(:,1:fix(end/2)*2) + repmat([0 dy],[n,fix(n/2)]);
-
+    
     %% Map points to boxes
     nix = isnan(xdata) | isnan(ydata);
     xdata = xdata(~nix);
@@ -83,37 +83,37 @@ function h = hexscatter( xdata, ydata, varargin )
     orientation = mod(foox,2) == 1;
 
     % Map points to boxes
-    foo = [xdata - xbins(foox)', ydata - ybins(fooy)'];
-
+    xdata = xdata - xbins(foox)';
+    ydata = ydata - ybins(fooy)';
+    
     % Which layer
-    layer = foo(:,2) > dy;
+    layer = ydata > dy;
 
     % Convert to block B format
     toflip = layer == orientation;
-    foo(toflip,1) = dx - foo(toflip,1);
+    xdata(toflip) = dx - xdata(toflip);
 
-    foo(layer==1,2) = foo(layer==1,2) - dy;
-
+    ydata(layer==1) = ydata(layer==1) - dy;
+    
     % Find closest corner
-    dist = sqrt(sum(foo.^2,2));
-    dist2 = sqrt(sum(bsxfun(@minus, [dx dy], foo).^2, 2));
-
-    topright = dist > dist2;
-
+    topright = xdata.^2 + ydata.^2 > (xdata-dx).^2 + (ydata-dy).^2;
+    clear xdata ydata
+    
     %% Map corners back to bins
     % Which x bin?
-    x = foox + ~(orientation == (layer == topright));
-    x(x > length(xbins)) = length(xbins);
+    foox = foox + ~(orientation == (layer == topright));
+    foox(foox > length(xbins)) = length(xbins);
     
     % Which y bin?
-    y = fooy + (layer & topright);
-    y(y > length(ybins)) = length(ybins);
+    fooy = fooy + (layer & topright);
+    fooy(fooy > length(ybins)) = length(ybins);
     
-    ii = sub2ind(size(X), y, x);
-
+    foox = sub2ind(size(X), fooy, foox);
+     % Replaced foox to conserve memory
+    
     %% Determine counts
-    counts = sum(bsxfun(@eq, ii, 1:numel(X)),1);
-
+    counts = histc(foox, 1:numel(X))';
+    
     newplot;
     xscale = diff(xbins([1 2]))*2/3;
     yscale = diff(ybins([1 2]))*2/3;

@@ -3,9 +3,13 @@
 % 
 % Calls eval using sprintf format arguments
 
-function evalstr( varargin )
+function out = evalstr( varargin )
     str = sprintf(varargin{:});
     fprintf('%s\n', str);
     evalin('caller', str);
-    
+%     out = evalin('caller', str);
+    out = {};
+    if nargout == 0
+        clear out;
+    end
 end

@@ -67,6 +67,10 @@ function string_out = iprintf( fid, format, varargin )
     if isnumeric( fid )
         % Print to file
         fprintf(fid, format, data{:});
+        
+        if nargout > 0
+            string_out = {};
+        end
     else
         % Print to cell array of strings
         string_out = cell(n,1);

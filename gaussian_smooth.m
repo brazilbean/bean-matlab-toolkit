@@ -35,6 +35,7 @@ function ysmooth = gaussian_smooth(y, w, dim, varargin)
     % Define the guassian window
     gw = params.gaussianwidth;
     if isnan(params.block)
+        normpdf = @(xx) exp(-xx.^2 ./ 2) ./ sqrt(2*pi);
         block = normpdf(linspace(-gw, gw, 2*w+1));
         block = block ./ sum(block);
     else

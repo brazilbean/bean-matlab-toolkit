@@ -10,9 +10,12 @@
 % PARZEN_MODE calculates the mode across diminsion 'dim' (default is 1)
 % using a gaussian kernal.
 
-function center = parzen_mode( data, dim )
+function center = parzen_mode( data, dim, width )
     if (nargin < 2)
         dim = find(size(data) ~= 1, 1, 'first');
+        if nargin < 3
+            width = nan;
+        end
     end
 
     ndims = length(size(data));
@@ -24,7 +27,7 @@ function center = parzen_mode( data, dim )
     
     center = nan(1,size(data_,2));
     for ii = 1 : size(data_,2)
-        center(ii) = parzen_mode_vector( data_(:,ii) );
+        center(ii) = parzen_mode_vector( data_(:,ii), width );
     end
     
     center = reshape( center, [1 sizes(2:end)] );
@@ -35,7 +38,7 @@ function center = parzen_mode( data, dim )
     % Revised by Gordon Bean (2011)
     % Uses parzen window smoothing to estimate the peak of a distribution.
 
-        if nargin < 2
+        if nargin < 2 || isnan(width)
     %         width=50;       %this is the default window width
             width = 1.06 * nanstd(list) * sum(~isnan(list))^(-0.2);
         end

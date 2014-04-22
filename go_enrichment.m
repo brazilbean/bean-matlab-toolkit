@@ -86,6 +86,9 @@ function enrich = go_enrichment( scores, names, go, filter, varargin )
         hits = term_scores(tn==n);
         hits = hits - median(hits);
         
+        % Find the percentage of null points more extreme than each score.
+        % Divide this by the percentage of scores more extreme than each
+        % score.
         fdr(tn==n) = mean( bsxfun(tailfun, null, hits') ) ./ ...
             mean( bsxfun(tailfun, hits, hits') );
     end

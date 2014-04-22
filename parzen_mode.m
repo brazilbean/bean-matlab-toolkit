@@ -13,11 +13,11 @@
 function center = parzen_mode( data, dim, width )
     if (nargin < 2)
         dim = find(size(data) ~= 1, 1, 'first');
-        if nargin < 3
-            width = nan;
-        end
     end
-
+    if nargin < 3
+        width = nan;
+    end
+    
     ndims = length(size(data));
     todim = [dim setdiff(1:ndims, dim)];
     

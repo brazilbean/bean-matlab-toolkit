@@ -51,6 +51,10 @@ function h = hexscatter( xdata, ydata, varargin )
         ec = 'none';
     end
     
+    %% Convert to vectors
+    xdata = xdata(:);
+    ydata = ydata(:);
+    
     %% Determine grid
     xl = params.xlim;
     yl = params.ylim;

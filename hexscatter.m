@@ -38,6 +38,14 @@
 % https://github.com/brazilbean/bean-matlab-toolkit
 
 function h = hexscatter( xdata, ydata, varargin )
+    %% Convert to vectors
+    xdata = xdata(:);
+    ydata = ydata(:);
+    
+    nix = isnan(xdata) | isnan(ydata);
+    xdata = xdata(~nix);
+    ydata = ydata(~nix);
+    
     params = default_param( varargin, ...
         'xlim', [min(xdata(:)) max(xdata(:))], ...
         'ylim', [min(ydata(:)) max(ydata(:))], ...
@@ -50,10 +58,6 @@ function h = hexscatter( xdata, ydata, varargin )
     else
         ec = 'none';
     end
-    
-    %% Convert to vectors
-    xdata = xdata(:);
-    ydata = ydata(:);
     
     %% Determine grid
     xl = params.xlim;
@@ -69,19 +73,17 @@ function h = hexscatter( xdata, ydata, varargin )
         Y(:,1:fix(end/2)*2) + repmat([0 dy],[n,fix(n/2)]);
     
     %% Map points to boxes
-    nix = isnan(xdata) | isnan(ydata);
-    xdata = xdata(~nix);
-    ydata = ydata(~nix);
-    
     % Which pair of columns?
     dx = diff(xbins([1 2]));
     foox = floor((xdata - xbins(1)) ./ dx)+1;
     foox(foox > length(xbins)) = length(xbins);
+    foox(foox < 1) = 1;
     
     % Which pair of rows?
     % Use the first row, which starts without an offset, as the standard
     fooy = floor((ydata - ybins(1)) ./ diff(ybins([1 2])))+1;
     fooy(fooy > length(ybins)) = length(ybins);
+    fooy(fooy < 1) = 1;
     
     % Which orientation
     orientation = mod(foox,2) == 1;
@@ -131,6 +133,9 @@ function h = hexscatter( xdata, ydata, varargin )
         jj = counts > 0;
         h = patch(x(:,jj), y(:,jj), counts(jj), 'edgeColor', ec);
     end
+    
+    xlim(params.xlim);
+    ylim(params.ylim);
     
     if nargout == 0
         clear h;

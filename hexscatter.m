@@ -42,7 +42,7 @@ function h = hexscatter( xdata, ydata, varargin )
     xdata = xdata(:);
     ydata = ydata(:);
     
-    nix = isnan(xdata) | isnan(ydata);
+    nix = isnan(xdata) | isnan(ydata) | isinf(xdata) | isinf(ydata);
     xdata = xdata(~nix);
     ydata = ydata(~nix);
     

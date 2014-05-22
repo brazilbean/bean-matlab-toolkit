@@ -1,7 +1,7 @@
 %% Quick Line
 % Gordon Bean, March 2012
 
-function qline( xx, yy, color, linewidth, varargin )
+function h = qline( xx, yy, color, linewidth, varargin )
     if (nargin < 3)
         color = 'k';
     end
@@ -28,6 +28,9 @@ function qline( xx, yy, color, linewidth, varargin )
         yy = [yy yy];
     end
 
-    line (xx, yy, 'color', color, 'linewidth', linewidth, ...
+    h = line (xx, yy, 'color', color, 'linewidth', linewidth, ...
         'linestyle', lstyle, varargin{:} );
+    if nargout < 1
+        clear h;
+    end
 end

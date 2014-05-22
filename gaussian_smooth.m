@@ -16,12 +16,27 @@ function ysmooth = gaussian_smooth(y, w, dim, varargin)
     params = default_param(varargin, ...
         'gaussianWidth', 3, ...
         'numEndAve', 10, ...
-        'block', nan);
+        'block', nan, ...
+        'fillNans', false);
     
     % Reshape y
     yp = permute_dim(y, dim);
     sz = size(yp);
     yp = reshape(yp, [sz(1) prod(sz(2:end))]);
+    
+    % Fix nans, if specified
+    if params.fillnans
+        nn = 1:size(yp,1);
+        for ii = 1 : size(yp,2)
+            nans = isnan(yp(:,ii));
+            if mean(nans) < 0.5 % must be at least 50% non-nan.
+                yp(nans,ii) = interp1(nn(~nans), yp(~nans,ii), nn(nans), ...
+                    'linear','extrap');
+            else
+                % Do nothing - let nans affect smoothed data.
+            end
+        end
+    end
     
     n = size(yp,1);
     ysmooth = yp;

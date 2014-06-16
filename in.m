@@ -123,6 +123,9 @@ function [out] = in (array, index)
         array2 = reshape(array, [dim(1)*dim(2) dim(3:end) 1]);
         out = reshape( array2(index(:),:), [sum(index(:)) dim(3:end) 1]);
         
+    elseif islogical(index) && numel(index) == numel(array)
+        out = array(index);
+        
     else
         % Index into first 2 dimensions using coordinates
         dim = size(array);

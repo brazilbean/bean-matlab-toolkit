@@ -45,7 +45,9 @@ function string_out = iprintf( fid, format, varargin )
         end
     end
     if any(cellfun(size1, varargin) ~= n)
-        error('Inputs must be of same length or length 1');
+        foo = cellfun(size1, varargin);
+        foo = sprintf('%i ', foo);
+        error('Inputs must be of same length or length 1: %s', foo);
     end
     
     % Turn all columns into cell arrays

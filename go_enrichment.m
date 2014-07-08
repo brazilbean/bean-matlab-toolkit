@@ -1,5 +1,27 @@
-%% Go Enrichment - print GO enrichment
+%% Go Enrichment - Perform GO enrichment
 % Gordon Bean, October 2013
+%
+% Usage
+% enrichment = go_enrichment( scores, names, go_struct, filter, ... )
+%
+% Scores - vector, NaNs are ignored
+% Names - cell array of strings - labels for the values in scores.
+% Go_struct - struct matching the format of that in gene_ontology.1_0.mat
+% filter - function handle - should accept a vector of term scores and
+%  return a logical vector indicating which terms to report; i.e. a filter
+%  on term score effect size
+% 
+% Parameters
+% 'fdr' - scalar <0.1> - the false discovery rate threshold for reporting
+%  terms
+% 'tail' - {'left','right','neg','pos','both'} <'left'> - indicates which
+%  tail to test to compute the FDR.
+% 'numIters' - scalar <1000> - the number of permutations to perform for
+%  the null model
+% 'verbose' - logical scalar <true> - whether to print the results
+% 'nbins' - deprecated
+% 'maxtermsize' - scalar <20> - size of largest terms for which to compute
+%  an FDR.
 
 function enrich = go_enrichment( scores, names, go, filter, varargin )
 

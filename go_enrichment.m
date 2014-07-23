@@ -118,37 +118,39 @@ function enrich = go_enrichment( scores, names, go, filter, varargin )
     %% Display significant terms
     sigterms = fdr <= params.fdr & filter(term_scores);
     [~,ord] = sort(tn(sigterms)+fdr(sigterms));
-    
-    fprintf('\n ------------------------------------ \n');
-    for ii = in(find(sigterms),ord)'
-        % Print term
-        fprintf('%s (%0.3f), FDR = %0.3f, n = %i\n', ...
-            mygo.definition{ii}, term_scores(ii), fdr(ii), tn(ii));
-        
-        % Print genes, scores
-        iii = mygo.membermat(ii,:) == 1;
-        [tmps, ord2] = sort(gene_scores(iii));
-        tmpn = in(unames(iii),ord2);
-        n = length(tmpn);
-        
-        for kk = 1 : 5 : n
-            kkk = kk : min(n, kk+4);
-            fprintf('   ');
-            iprintf(1, '%s (%0.2f), ', tmpn(kkk), tmps(kkk));
-            fprintf('\n');
-        end
-        
-        goi = achar(mygo.term(ii), go.term);
-        missed = setdiff(go.gene(go.membermat(goi,:)==1), tmpn);
-        if ~isempty(missed)
-            fprintf('   Genes missing data: ');
-            fprintf('%s ', missed{:});
-            fprintf('\n');
-        end
-        fprintf('\n');
-        
-    end
 
+    if params.verbose
+        fprintf('\n ------------------------------------ \n');
+        for ii = in(find(sigterms),ord)'
+            % Print term
+            fprintf('%s (%0.3f), FDR = %0.3f, n = %i\n', ...
+                mygo.definition{ii}, term_scores(ii), fdr(ii), tn(ii));
+
+            % Print genes, scores
+            iii = mygo.membermat(ii,:) == 1;
+            [tmps, ord2] = sort(gene_scores(iii));
+            tmpn = in(unames(iii),ord2);
+            n = length(tmpn);
+
+            for kk = 1 : 5 : n
+                kkk = kk : min(n, kk+4);
+                fprintf('   ');
+                iprintf(1, '%s (%0.2f), ', tmpn(kkk), tmps(kkk));
+                fprintf('\n');
+            end
+
+            goi = achar(mygo.term(ii), go.term);
+            missed = setdiff(go.gene(go.membermat(goi,:)==1), tmpn);
+            if ~isempty(missed)
+                fprintf('   Genes missing data: ');
+                fprintf('%s ', missed{:});
+                fprintf('\n');
+            end
+            fprintf('\n');
+
+        end
+    end
+    
     %% Return
     enrich.params = params;
     enrich.unames = unames;

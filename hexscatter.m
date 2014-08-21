@@ -49,7 +49,7 @@ function h = hexscatter( xdata, ydata, varargin )
     params = default_param( varargin, ...
         'xlim', [min(xdata(:)) max(xdata(:))], ...
         'ylim', [min(ydata(:)) max(ydata(:))], ...
-        'res', 100, ...
+        'res', [100 100], ...
         'drawEdges', false, ...
         'showZeros', false);
     
@@ -59,18 +59,22 @@ function h = hexscatter( xdata, ydata, varargin )
         ec = 'none';
     end
     
+    if length(params.res)==1
+        params.res = params.res * [1 1];
+    end
+    
     %% Determine grid
     xl = params.xlim;
     yl = params.ylim;
     
-    xbins = linspace(xl(1), xl(2), params.res);
-    ybins = linspace(yl(1), yl(2), params.res);
+    xbins = linspace(xl(1), xl(2), params.res(2));
+    ybins = linspace(yl(1), yl(2), params.res(1));
     dy = diff(ybins([1 2]))*0.5;
     
     [X, Y] = meshgrid(xbins, ybins);
-    n = size(X,1);
+    [n,m] = size(X);
     Y(:,1:fix(end/2)*2) = ...
-        Y(:,1:fix(end/2)*2) + repmat([0 dy],[n,fix(n/2)]);
+        Y(:,1:fix(end/2)*2) + repmat([0 dy],[n,fix(m/2)]);
     
     %% Map points to boxes
     % Which pair of columns?

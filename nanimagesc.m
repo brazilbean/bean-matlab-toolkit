@@ -30,7 +30,7 @@ function h = nanimagesc(data, varargin)
     xlim([min(xverts(:)) max(xverts(:))]);
     ylim([min(yverts(:)) max(yverts(:))]);
     
-    if nargin == 0
+    if nargout < 1
         clear h;
     end
 end
